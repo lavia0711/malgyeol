@@ -36,6 +36,12 @@ test("server-renders the Korean product shell", async () => {
   assert.match(html, /오늘의 단어/);
   assert.match(html, /고른 낱말 120/);
   assert.match(html, /국립국어원 한국어기초사전/);
+  assert.match(html, /property="og:image"/);
+  assert.match(html, /name="twitter:card" content="summary_large_image"/);
+  assert.match(
+    html,
+    /https:\/\/malgyeol\.geonwoomoon\.chatgpt\.site\/og\.png/,
+  );
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape|react-loading-skeleton/i);
 });
 
@@ -83,4 +89,15 @@ test("ships a compact dictionary without restricted example or media fields", as
     assert.equal(entry.source, "krdict");
     assert.equal(entry.curated, false);
   }
+});
+
+test("ships a standard 1200 by 630 PNG social card", async () => {
+  const image = await readFile(new URL("../public/og.png", import.meta.url));
+
+  assert.deepEqual(
+    [...image.subarray(0, 8)],
+    [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a],
+  );
+  assert.equal(image.readUInt32BE(16), 1200);
+  assert.equal(image.readUInt32BE(20), 630);
 });
