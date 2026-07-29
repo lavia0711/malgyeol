@@ -19,7 +19,7 @@ export async function generateMetadata(): Promise<Metadata> {
       ? forwardedProtocol
       : "https";
   const origin = `${protocol}://${host}`;
-  const ogImage = `${origin}/og.png`;
+  const ogImage = `${origin}/og.png?v=poetry-cover`;
 
   return {
     title,
