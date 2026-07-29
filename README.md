@@ -1,45 +1,130 @@
 # 말결
 
-뜻과 분위기로 아름다운 한국어 단어를 발견하는 웹사이트입니다. 창작자와
-이름을 짓는 사용자가 사전 검색과 편집된 단어 컬렉션을 한 화면에서 사용할
-수 있습니다.
+> 마음에 오래 남는 단어의 결을 찾으세요.
+
+뜻과 분위기로 아름다운 한국어 단어를 발견하는 웹사이트입니다.
+창작자와 이름을 짓는 사용자가 정확한 사전 검색과 감성적인 단어 큐레이션을
+한 화면에서 이용할 수 있도록 만들었습니다.
+
+[말결 사용해 보기](https://malgyeol.geonwoomoon.chatgpt.site)
+
+![말결 소셜 미리보기](./public/og.png)
 
 ## 주요 기능
 
-- 8개 분위기, 120개 선별 단어
-- MiniSearch 기반 정확·접두·유사 검색
-- 한국어기초사전 전체 검색 데이터 지연 로딩
-- 오늘의 단어, 브라우저 찜, 공유 주소
-- 반응형 화면과 키보드 접근성
+- 맑음·포근함·설렘·고요·빛남·그리움·굳셈·신비의 8가지 분위기
+- 분위기별 15개, 총 120개의 엄선된 한국어 단어
+- 단어·뜻·편집자 해설·분위기·창작 용도를 아우르는 통합 검색
+- 정확 일치, 접두어 일치, 오타 유사도 순으로 정렬하는 MiniSearch 검색
+- 검색을 시작할 때만 한국어기초사전 전체 데이터를 불러오는 지연 로딩
+- 날짜가 같으면 동일하게 유지되는 오늘의 단어
+- 로그인 없이 브라우저에 저장되는 찜 목록
+- `?word=<id>`로 직접 열 수 있는 접근 가능한 단어 상세 패널
+- 운영체제 공유 기능과 링크 복사 대체 동작
+- 360px 모바일부터 데스크톱까지 대응하는 반응형 화면
+- 키보드 탐색, 초점 이동, 상태 알림 등 기본 접근성 지원
+- Open Graph 및 X 대형 카드 메타데이터
 
-## 개발
+## 기술 스택
+
+| 구분 | 기술 |
+| --- | --- |
+| UI | React 19, TypeScript, Next.js |
+| 빌드·런타임 | [vinext](https://github.com/cloudflare/vinext), Vite |
+| 검색 | [MiniSearch](https://github.com/lucaong/minisearch) |
+| 아이콘 | [Lucide](https://github.com/lucide-icons/lucide) |
+| 글꼴 | [Pretendard](https://github.com/orioncactus/pretendard), Gowun Batang |
+| 데이터 | 국립국어원 한국어기초사전 파생 데이터 |
+| 배포 | OpenAI Sites |
+
+## 시작하기
 
 Node.js 22.13 이상이 필요합니다.
 
 ```bash
+git clone <repository-url>
+cd malgyeol
 npm install
 npm run dev
-npm run build
-npm test
 ```
 
-한국어기초사전 XML을 `work/korean-dict-nikl/krdict`에 준비한 뒤 검색 데이터를
-다시 만들 수 있습니다.
+개발 서버가 안내하는 로컬 주소를 브라우저에서 열면 됩니다.
+
+## 명령어
+
+```bash
+# 개발 서버
+npm run dev
+
+# 프로덕션 빌드
+npm run build
+
+# 빌드와 자동 테스트
+npm test
+
+# ESLint 검사
+npm run lint
+
+# 한국어기초사전 검색 데이터 재생성
+npm run build:data
+```
+
+## 사전 데이터 만들기
+
+검색 데이터는
+[korean-dict-nikl](https://github.com/spellcheck-ko/korean-dict-nikl)의
+한국어기초사전 XML을 기반으로 만듭니다. 원본을
+`work/korean-dict-nikl/krdict`에 준비한 뒤 다음 명령을 실행합니다.
 
 ```bash
 npm run build:data
 ```
 
-제품 문서는 `docs/`에서 확인할 수 있습니다.
+변환 스크립트는 표제어, 품사, 발음 텍스트, 첫 번째 뜻풀이만 추출합니다.
+재배포가 제한될 수 있는 예문·음성·이미지·동영상은 결과에 포함하지 않습니다.
+사용한 원본 커밋과 생성 정보는 `public/data/dictionary-meta.json`에 기록됩니다.
 
-## 오픈소스 기반
+## 프로젝트 구조
 
-- [vinext](https://github.com/cloudflare/vinext)
-- [MiniSearch](https://github.com/lucaong/minisearch)
-- [Lucide](https://github.com/lucide-icons/lucide)
-- [Pretendard](https://github.com/orioncactus/pretendard)
-- [korean-dict-nikl](https://github.com/spellcheck-ko/korean-dict-nikl)
+```text
+app/
+├─ data/words.ts          # 120개 선별 단어와 공용 데이터 타입
+├─ globals.css            # 디자인 토큰과 반응형 스타일
+├─ layout.tsx             # 사이트 메타데이터와 OG 연결
+└─ page.tsx               # 검색, 필터, 찜, 공유, 상세 패널
+docs/
+├─ PRD.md
+├─ FEATURE_SPEC.md
+├─ USER_FLOW.md
+└─ WIREFRAME.md
+public/
+├─ data/                  # 빌드된 사전 검색 데이터
+└─ og.png                 # 1200×630 소셜 미리보기
+scripts/
+└─ build-dictionary.mjs   # 한국어기초사전 XML 변환
+tests/
+└─ rendered-html.test.mjs # 렌더링·데이터·OG 회귀 테스트
+```
 
-애플리케이션 코드는 MIT 라이선스입니다. 사전 파생 데이터와 편집 데이터는
-`DATA_LICENSE.md`의 CC BY-SA 2.0 KR 조건을 따릅니다.
+## 제품 문서
 
+- [PRD](./docs/PRD.md)
+- [기능 명세서](./docs/FEATURE_SPEC.md)
+- [유저 플로우](./docs/USER_FLOW.md)
+- [와이어프레임](./docs/WIREFRAME.md)
+
+## 데이터와 라이선스
+
+- 애플리케이션 코드: [MIT](./LICENSE)
+- 사전 파생 데이터와 편집 데이터:
+  [CC BY-SA 2.0 KR](./DATA_LICENSE.md)
+- 사전 원본 제공자: 국립국어원
+
+코드와 데이터의 라이선스 범위가 다르므로 재사용하거나 재배포할 때 각각의
+조건을 확인해 주세요.
+
+## 배포
+
+현재 프로덕션 버전은 다음 주소에서 확인할 수 있습니다.
+
+<https://malgyeol.geonwoomoon.chatgpt.site>
