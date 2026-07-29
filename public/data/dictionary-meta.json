@@ -1,0 +1,17 @@
+{
+  "name": "한국어기초사전",
+  "provider": "국립국어원",
+  "sourceRepository": "https://github.com/spellcheck-ko/korean-dict-nikl",
+  "sourceCommit": "42c0d01889f34536e9cf94fe57f62bd2055b1bde",
+  "sourceDirectory": "krdict",
+  "license": "CC BY-SA 2.0 KR",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0/kr/",
+  "generatedAt": "2026-07-29T16:40:18.083Z",
+  "entryCount": 51555,
+  "excludedFields": [
+    "SenseExample",
+    "sound",
+    "image",
+    "video"
+  ]
+}
