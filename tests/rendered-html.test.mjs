@@ -2,14 +2,14 @@ import assert from "node:assert/strict";
 import { access, readFile } from "node:fs/promises";
 import test from "node:test";
 
-async function render(path = "/") {
+async function render(path = "/", requestHeaders = {}) {
   const workerUrl = new URL("../dist/server/index.js", import.meta.url);
   workerUrl.searchParams.set("test", `${process.pid}-${Date.now()}`);
   const { default: worker } = await import(workerUrl.href);
 
   return worker.fetch(
     new Request(`http://localhost${path}`, {
-      headers: { accept: "text/html" },
+      headers: { accept: "text/html", ...requestHeaders },
     }),
     {
       ASSETS: {
@@ -27,6 +27,16 @@ test("server-renders the Korean product shell", async () => {
   const response = await render();
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
+  assert.equal(response.headers.get("x-content-type-options"), "nosniff");
+  assert.equal(response.headers.get("x-frame-options"), "DENY");
+  assert.equal(
+    response.headers.get("referrer-policy"),
+    "strict-origin-when-cross-origin",
+  );
+  assert.match(
+    response.headers.get("content-security-policy") ?? "",
+    /frame-ancestors 'none'/,
+  );
 
   const html = await response.text();
   assert.match(html, /<html[^>]*lang="ko"/i);
@@ -43,6 +53,18 @@ test("server-renders the Korean product shell", async () => {
     /https:\/\/malgyeol\.geonwoomoon\.chatgpt\.site\/og\.png/,
   );
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape|react-loading-skeleton/i);
+});
+
+test("does not reflect forwarded host values into social metadata", async () => {
+  const response = await render("/", {
+    host: "attacker.example",
+    "x-forwarded-host": "attacker.example",
+    "x-forwarded-proto": "http",
+  });
+  const html = await response.text();
+
+  assert.doesNotMatch(html, /attacker\.example/);
+  assert.match(html, /https:\/\/malgyeol\.geonwoomoon\.chatgpt\.site\/og\.png/);
 });
 
 test("removes starter-only assets and dependencies", async () => {
