@@ -1,26 +1,16 @@
 import type { Metadata, Viewport } from "next";
-import { headers } from "next/headers";
 import "@fontsource/hahmlet/400.css";
 import "@fontsource/hahmlet/500.css";
 import "./globals.css";
+
+const siteOrigin = "https://malgyeol.geonwoomoon.chatgpt.site";
 
 const title = "말결 — 아름다운 한국어 단어 찾기";
 const description =
   "뜻과 분위기로 발견하는 아름다운 우리말. 창작과 이름 짓기에 어울리는 낱말을 찾아보세요.";
 
-export async function generateMetadata(): Promise<Metadata> {
-  const requestHeaders = await headers();
-  const host =
-    requestHeaders.get("x-forwarded-host")?.split(",")[0]?.trim() ??
-    requestHeaders.get("host") ??
-    "malgyeol.geonwoomoon.chatgpt.site";
-  const forwardedProtocol =
-    requestHeaders.get("x-forwarded-proto")?.split(",")[0]?.trim() ?? "https";
-  const protocol =
-    forwardedProtocol === "http" || forwardedProtocol === "https"
-      ? forwardedProtocol
-      : "https";
-  const origin = `${protocol}://${host}`;
+export function generateMetadata(): Metadata {
+  const origin = siteOrigin;
   const ogImage = `${origin}/og.png?v=poetry-cover`;
 
   return {

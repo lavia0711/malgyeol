@@ -39,6 +39,7 @@ async function staticResponse(pathname, method = "GET") {
     const headers = {
       "Content-Type": contentTypes[extname(filePath)] ?? "application/octet-stream",
       "Content-Length": String(fileStat.size),
+      "X-Content-Type-Options": "nosniff",
       "Cache-Control": decodedPath.startsWith("/assets/")
         ? "public, max-age=31536000, immutable"
         : "public, max-age=3600",
