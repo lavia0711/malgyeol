@@ -6,12 +6,10 @@ import {
   ArrowRight,
   Bookmark,
   Check,
-  Feather,
   Heart,
   RotateCcw,
   Search,
   Share2,
-  Sparkles,
   X,
 } from "lucide-react";
 import Link from "next/link";
@@ -92,35 +90,36 @@ const curatedSearchIndex = createSearchIndex(curatedWords);
 
 function WordCard({
   entry,
+  index,
   favorite,
   onOpen,
   onFavorite,
 }: {
   entry: WordEntry;
+  index: number;
   favorite: boolean;
   onOpen: (entry: WordEntry) => void;
   onFavorite: (entry: WordEntry) => void;
 }) {
   return (
     <article className="word-card">
-      <div className="word-card-topline">
-        <span className="word-kind">{entry.moods[0] ?? "사전"}</span>
-        <button
-          className={`icon-button ${favorite ? "is-favorite" : ""}`}
-          type="button"
-          aria-label={`${entry.word} ${favorite ? "찜 해제" : "찜하기"}`}
-          aria-pressed={favorite}
-          onClick={() => onFavorite(entry)}
-        >
-          <Heart aria-hidden="true" size={18} fill={favorite ? "currentColor" : "none"} />
-        </button>
-      </div>
+      <span className="word-index" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
       <button className="word-card-body" type="button" onClick={() => onOpen(entry)}>
         <span className="word-card-title">{entry.word}</span>
         <span className="word-card-definition">{entry.definition}</span>
         <span className="word-card-link">
-          단어의 결 보기 <ArrowRight aria-hidden="true" size={15} />
+          펼쳐 보기 <ArrowRight aria-hidden="true" size={15} />
         </span>
+      </button>
+      <span className="word-kind">{entry.moods[0] ?? "사전"}</span>
+      <button
+        className={`icon-button ${favorite ? "is-favorite" : ""}`}
+        type="button"
+        aria-label={`${entry.word} ${favorite ? "찜 해제" : "찜하기"}`}
+        aria-pressed={favorite}
+        onClick={() => onFavorite(entry)}
+      >
+        <Heart aria-hidden="true" size={18} fill={favorite ? "currentColor" : "none"} />
       </button>
     </article>
   );
@@ -433,9 +432,13 @@ export default function Home() {
 
         <header className="site-header">
           <Link className="brand" href="/" aria-label="말결 홈">
-            <span className="brand-mark" aria-hidden="true">ㅁ</span>
-            <span>말결</span>
+            <span className="brand-mark" aria-hidden="true">말결</span>
+            <span>말결 사전</span>
           </Link>
+          <nav className="site-nav" aria-label="주요 메뉴">
+            <a href="#today-title">오늘의 낱말</a>
+            <a href="#collection-title">낱말 모음</a>
+          </nav>
           <button
             className={`favorites-button ${favoritesOnly ? "is-active" : ""}`}
             type="button"
@@ -452,14 +455,13 @@ export default function Home() {
 
         <section className="hero" aria-labelledby="hero-title">
           <div className="hero-copy">
-            <p className="eyebrow"><Feather aria-hidden="true" size={15} />우리말 발견 사전</p>
-            <h1 id="hero-title">마음에 오래 남는<br /><em>단어의 결</em>을 찾으세요.</h1>
+            <p className="eyebrow">우리말 발견 사전 · 제01권</p>
+            <h1 id="hero-title">마음에 오래 남는<br /><em>단어의 결</em>을 찾습니다.</h1>
             <p className="hero-description">
-              쓰임을 기다리는 아름다운 한국어를 뜻과 분위기로 살펴보세요.
-              이름과 문장에 꼭 맞는 한 단어가 여기 있습니다.
+              이름과 문장에 오래 머무를 우리말을 뜻과 분위기로 차분히 살펴보세요.
             </p>
           </div>
-          <div className="hero-glyph" aria-hidden="true"><span>말</span><i>결</i></div>
+          <div className="hero-glyph" aria-hidden="true"><small>말결 · 2026 · 여름호</small><span>말</span><i>결</i></div>
         </section>
 
         <section className="search-section" aria-label="낱말 검색">
@@ -476,7 +478,7 @@ export default function Home() {
                 setFavoritesOnly(false);
                 setVisibleLimit(PAGE_SIZE);
               }}
-              placeholder="뜻이나 느낌을 입력해 보세요"
+              placeholder="단어 또는 분위기를 입력해 보세요"
               autoComplete="off"
             />
             {query ? (
@@ -519,7 +521,7 @@ export default function Home() {
         <section className="featured-section" aria-labelledby="today-title">
           <article className="today-card">
             <div>
-              <p className="card-label" id="today-title"><Sparkles aria-hidden="true" size={15} />오늘의 단어</p>
+              <p className="card-label" id="today-title">오늘의 단어 / 0803</p>
               <button type="button" className="today-word" onClick={() => openWord(todayWord)}>{todayWord.word}</button>
               <p>{todayWord.definition}</p>
             </div>
@@ -544,7 +546,7 @@ export default function Home() {
         <section className="collection-section" aria-labelledby="collection-title">
           <div className="section-heading">
             <div>
-              <p className="eyebrow">고른 낱말 120</p>
+              <p className="eyebrow">고른 낱말 120 · 선별한 우리말</p>
               <h2 id="collection-title">
                 {favoritesOnly ? "내가 고른 낱말" : deferredQuery ? `‘${deferredQuery}’ 검색 결과` : selectedMoods.size ? "선택한 분위기의 낱말" : "오늘 펼쳐 볼 낱말"}
               </h2>
@@ -555,8 +557,8 @@ export default function Home() {
           {collection.visible.length > 0 ? (
             <>
               <div className="word-grid">
-                {collection.visible.map((entry) => (
-                  <WordCard key={entry.id} entry={entry} favorite={favorites.has(entry.id)} onOpen={openWord} onFavorite={toggleFavorite} />
+                {collection.visible.map((entry, index) => (
+                  <WordCard key={entry.id} entry={entry} index={index} favorite={favorites.has(entry.id)} onOpen={openWord} onFavorite={toggleFavorite} />
                 ))}
               </div>
               {!normalizedQuery && !favoritesOnly && collection.visible.length < collection.total && (
@@ -577,7 +579,7 @@ export default function Home() {
 
         <footer>
           <div>
-            <Link className="brand footer-brand" href="/"><span className="brand-mark" aria-hidden="true">ㅁ</span><span>말결</span></Link>
+            <Link className="brand footer-brand" href="/"><span className="brand-mark" aria-hidden="true">말결</span><span>말결 사전</span></Link>
             <p>우리말의 좋은 결을 오래 들여다봅니다.</p>
           </div>
           <p className="license-copy">사전 자료: 국립국어원 한국어기초사전 · CC BY-SA 2.0 KR<br />예문과 음성·이미지 자료는 포함하지 않습니다.</p>
