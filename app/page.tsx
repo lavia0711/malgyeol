@@ -6,12 +6,10 @@ import {
   ArrowRight,
   Bookmark,
   Check,
-  Feather,
   Heart,
   RotateCcw,
   Search,
   Share2,
-  Sparkles,
   X,
 } from "lucide-react";
 import Link from "next/link";
@@ -92,35 +90,36 @@ const curatedSearchIndex = createSearchIndex(curatedWords);
 
 function WordCard({
   entry,
+  index,
   favorite,
   onOpen,
   onFavorite,
 }: {
   entry: WordEntry;
+  index: number;
   favorite: boolean;
   onOpen: (entry: WordEntry) => void;
   onFavorite: (entry: WordEntry) => void;
 }) {
   return (
     <article className="word-card">
-      <div className="word-card-topline">
-        <span className="word-kind">{entry.moods[0] ?? "사전"}</span>
-        <button
-          className={`icon-button ${favorite ? "is-favorite" : ""}`}
-          type="button"
-          aria-label={`${entry.word} ${favorite ? "찜 해제" : "찜하기"}`}
-          aria-pressed={favorite}
-          onClick={() => onFavorite(entry)}
-        >
-          <Heart aria-hidden="true" size={18} fill={favorite ? "currentColor" : "none"} />
-        </button>
-      </div>
+      <span className="word-index" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
       <button className="word-card-body" type="button" onClick={() => onOpen(entry)}>
         <span className="word-card-title">{entry.word}</span>
         <span className="word-card-definition">{entry.definition}</span>
         <span className="word-card-link">
-          단어의 결 보기 <ArrowRight aria-hidden="true" size={15} />
+          낱말 보기 <ArrowRight aria-hidden="true" size={15} />
         </span>
+      </button>
+      <span className="word-kind">{entry.moods[0] ?? "사전"}</span>
+      <button
+        className={`icon-button ${favorite ? "is-favorite" : ""}`}
+        type="button"
+        aria-label={`${entry.word} ${favorite ? "찜 해제" : "찜하기"}`}
+        aria-pressed={favorite}
+        onClick={() => onFavorite(entry)}
+      >
+        <Heart aria-hidden="true" size={18} fill={favorite ? "currentColor" : "none"} />
       </button>
     </article>
   );
@@ -428,14 +427,30 @@ export default function Home() {
 
   return (
     <Dialog.Root open={Boolean(selectedWord)} onOpenChange={(open) => !open && selectedWord && closeWord()}>
-      <main>
-        <p className="sr-only" aria-live="polite">{announcement}</p>
+      <main className="poster-shell">
+        <aside className="mood-rail">
+          <Link className="rail-brand" href="/" aria-label="말결 홈"><span>말결</span><span aria-hidden="true">ㅁㄱ</span></Link>
+          <p className="rail-copy">마음에 오래 남는 우리말</p>
+          <div className="rail-moods" aria-label="분위기 필터">
+            {MOODS.map((mood) => (
+              <button
+                key={mood}
+                type="button"
+                aria-pressed={selectedMoods.has(mood)}
+                className={selectedMoods.has(mood) ? "is-selected" : ""}
+                onClick={() => toggleMood(mood)}
+              >
+                {selectedMoods.has(mood) && <Check aria-hidden="true" size={13} />}{mood}
+              </button>
+            ))}
+          </div>
+        </aside>
+
+        <div className="poster-page">
+          <p className="sr-only" aria-live="polite">{announcement}</p>
 
         <header className="site-header">
-          <Link className="brand" href="/" aria-label="말결 홈">
-            <span className="brand-mark" aria-hidden="true">ㅁ</span>
-            <span>말결</span>
-          </Link>
+          <span className="issue-label">우리말 발견 사전 · ISSUE 08</span>
           <button
             className={`favorites-button ${favoritesOnly ? "is-active" : ""}`}
             type="button"
@@ -452,14 +467,26 @@ export default function Home() {
 
         <section className="hero" aria-labelledby="hero-title">
           <div className="hero-copy">
-            <p className="eyebrow"><Feather aria-hidden="true" size={15} />우리말 발견 사전</p>
-            <h1 id="hero-title">마음에 오래 남는<br /><em>단어의 결</em>을 찾으세요.</h1>
+            <p className="eyebrow">ISSUE 08 · 우리말 수집</p>
+            <h1 id="hero-title">오래 불러도 좋은<br /><em>말</em>을 찾습니다.</h1>
             <p className="hero-description">
-              쓰임을 기다리는 아름다운 한국어를 뜻과 분위기로 살펴보세요.
-              이름과 문장에 꼭 맞는 한 단어가 여기 있습니다.
+              마음에 오래 남는 우리말을 이름과 문장에 쓸 수 있도록 뜻과 감각으로 탐색하세요.
             </p>
           </div>
-          <div className="hero-glyph" aria-hidden="true"><span>말</span><i>결</i></div>
+          <article className="hero-glyph" aria-labelledby="today-title">
+            <p className="card-label" id="today-title">오늘의 단어 · 한 낱말</p>
+            <button type="button" className="today-word" onClick={() => openWord(todayWord)}>{todayWord.word}</button>
+            <p>{todayWord.definition}</p>
+            <div className="today-actions">
+              <button type="button" onClick={() => openWord(todayWord)}>낱말 보기 <ArrowRight aria-hidden="true" size={16} /></button>
+              <button type="button" aria-label={`${todayWord.word} ${favorites.has(todayWord.id) ? "찜 해제" : "찜하기"}`} onClick={() => toggleFavorite(todayWord)}>
+                <Heart aria-hidden="true" size={17} fill={favorites.has(todayWord.id) ? "currentColor" : "none"} />
+              </button>
+              <button type="button" aria-label={`${todayWord.word} 공유`} onClick={() => void shareWord(todayWord)}>
+                <Share2 aria-hidden="true" size={17} />
+              </button>
+            </div>
+          </article>
         </section>
 
         <section className="search-section" aria-label="낱말 검색">
@@ -498,42 +525,9 @@ export default function Home() {
             </p>
           )}
 
-          <div className="mood-row" aria-label="분위기 필터">
-            <span>분위기로 찾기</span>
-            <div className="mood-list">
-              {MOODS.map((mood) => (
-                <button
-                  key={mood}
-                  type="button"
-                  aria-pressed={selectedMoods.has(mood)}
-                  className={selectedMoods.has(mood) ? "is-selected" : ""}
-                  onClick={() => toggleMood(mood)}
-                >
-                  {selectedMoods.has(mood) && <Check aria-hidden="true" size={13} />}{mood}
-                </button>
-              ))}
-            </div>
-          </div>
         </section>
 
-        <section className="featured-section" aria-labelledby="today-title">
-          <article className="today-card">
-            <div>
-              <p className="card-label" id="today-title"><Sparkles aria-hidden="true" size={15} />오늘의 단어</p>
-              <button type="button" className="today-word" onClick={() => openWord(todayWord)}>{todayWord.word}</button>
-              <p>{todayWord.definition}</p>
-            </div>
-            <div className="today-actions">
-              <button type="button" onClick={() => openWord(todayWord)}>자세히 보기 <ArrowRight aria-hidden="true" size={16} /></button>
-              <button type="button" aria-label={`${todayWord.word} ${favorites.has(todayWord.id) ? "찜 해제" : "찜하기"}`} onClick={() => toggleFavorite(todayWord)}>
-                <Heart aria-hidden="true" size={17} fill={favorites.has(todayWord.id) ? "currentColor" : "none"} />
-              </button>
-              <button type="button" aria-label={`${todayWord.word} 공유`} onClick={() => void shareWord(todayWord)}>
-                <Share2 aria-hidden="true" size={17} />
-              </button>
-            </div>
-          </article>
-
+        <section className="featured-section" aria-label="말결의 편집자 제안">
           <aside className="editor-note">
             <p className="card-label">말결의 제안</p>
             <blockquote>“{todayWord.editorialNote}”</blockquote>
@@ -544,7 +538,7 @@ export default function Home() {
         <section className="collection-section" aria-labelledby="collection-title">
           <div className="section-heading">
             <div>
-              <p className="eyebrow">고른 낱말 120</p>
+              <p className="eyebrow">고른 낱말 120 · 01—120</p>
               <h2 id="collection-title">
                 {favoritesOnly ? "내가 고른 낱말" : deferredQuery ? `‘${deferredQuery}’ 검색 결과` : selectedMoods.size ? "선택한 분위기의 낱말" : "오늘 펼쳐 볼 낱말"}
               </h2>
@@ -555,8 +549,8 @@ export default function Home() {
           {collection.visible.length > 0 ? (
             <>
               <div className="word-grid">
-                {collection.visible.map((entry) => (
-                  <WordCard key={entry.id} entry={entry} favorite={favorites.has(entry.id)} onOpen={openWord} onFavorite={toggleFavorite} />
+                {collection.visible.map((entry, index) => (
+                  <WordCard key={entry.id} entry={entry} index={index} favorite={favorites.has(entry.id)} onOpen={openWord} onFavorite={toggleFavorite} />
                 ))}
               </div>
               {!normalizedQuery && !favoritesOnly && collection.visible.length < collection.total && (
@@ -577,7 +571,7 @@ export default function Home() {
 
         <footer>
           <div>
-            <Link className="brand footer-brand" href="/"><span className="brand-mark" aria-hidden="true">ㅁ</span><span>말결</span></Link>
+            <Link className="brand footer-brand" href="/"><span className="brand-mark" aria-hidden="true">ㅁㄱ</span><span>말결</span></Link>
             <p>우리말의 좋은 결을 오래 들여다봅니다.</p>
           </div>
           <p className="license-copy">사전 자료: 국립국어원 한국어기초사전 · CC BY-SA 2.0 KR<br />예문과 음성·이미지 자료는 포함하지 않습니다.</p>
@@ -586,6 +580,7 @@ export default function Home() {
             <a href="https://creativecommons.org/licenses/by-sa/2.0/kr/">라이선스</a>
           </div>
         </footer>
+        </div>
       </main>
 
       {selectedWord && (
