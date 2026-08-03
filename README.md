@@ -16,10 +16,11 @@
 - 분위기별 15개, 총 120개의 엄선된 한국어 단어
 - 단어·뜻·편집자 해설·분위기·창작 용도를 아우르는 통합 검색
 - 정확 일치, 접두어 일치, 오타 유사도 순으로 정렬하는 MiniSearch 검색
-- 검색을 시작할 때만 한국어기초사전 전체 데이터를 불러오는 지연 로딩
+- 검색을 시작할 때만 8개 사전 청크를 Web Worker에서 점진 색인하는 지연 로딩
 - 날짜가 같으면 동일하게 유지되는 오늘의 단어
-- 로그인 없이 브라우저에 저장되는 찜 목록
-- `?word=<id>`로 직접 열 수 있는 접근 가능한 단어 상세 패널
+- 전체 사전 단어도 새로고침 뒤 복원되는 로그인 없는 찜 목록
+- 주소·브라우저 기록과 동기화되는 Radix 기반 접근 가능한 단어 상세 패널
+- `Ctrl/⌘ + K` 검색 단축키와 axe 기반 접근성 회귀 검사
 - 운영체제 공유 기능과 링크 복사 대체 동작
 - 360px 모바일부터 데스크톱까지 대응하는 반응형 화면
 - 키보드 탐색, 초점 이동, 상태 알림 등 기본 접근성 지원
@@ -33,7 +34,7 @@
 | 빌드·런타임 | [vinext](https://github.com/cloudflare/vinext), Vite |
 | 검색 | [MiniSearch](https://github.com/lucaong/minisearch) |
 | 아이콘 | [Lucide](https://github.com/lucide-icons/lucide) |
-| 글꼴 | [Pretendard](https://github.com/orioncactus/pretendard), Gowun Batang |
+| 글꼴 | 시스템 산세리프, [Fontsource](https://github.com/fontsource/fontsource)의 Gowun Batang |
 | 데이터 | 국립국어원 한국어기초사전 파생 데이터 |
 | 배포 | OpenAI Sites |
 
@@ -62,6 +63,12 @@ npm run build
 # 빌드와 자동 테스트
 npm test
 
+# lint, TypeScript, 빌드, 단위·E2E·접근성 전체 검사
+npm run check
+
+# Chromium E2E·접근성 검사
+npm run test:e2e
+
 # ESLint 검사
 npm run lint
 
@@ -80,7 +87,8 @@ npm run build:data
 npm run build:data
 ```
 
-변환 스크립트는 표제어, 품사, 발음 텍스트, 첫 번째 뜻풀이만 추출합니다.
+변환 스크립트는 표제어, 품사, 발음 텍스트, 첫 번째 뜻풀이만 추출해
+compact tuple 형식의 청크와 manifest를 만듭니다.
 재배포가 제한될 수 있는 예문·음성·이미지·동영상은 결과에 포함하지 않습니다.
 사용한 원본 커밋과 생성 정보는 `public/data/dictionary-meta.json`에 기록됩니다.
 
@@ -90,8 +98,9 @@ npm run build:data
 app/
 ├─ data/words.ts          # 120개 선별 단어와 공용 데이터 타입
 ├─ globals.css            # 디자인 토큰과 반응형 스타일
+├─ dictionary.worker.ts   # 전체 사전 점진 색인·검색 워커
 ├─ layout.tsx             # 사이트 메타데이터와 OG 연결
-└─ page.tsx               # 검색, 필터, 찜, 공유, 상세 패널
+└─ page.tsx               # 검색, 필터, 찜, 공유, 상세 다이얼로그
 docs/
 ├─ PRD.md
 ├─ FEATURE_SPEC.md
@@ -101,8 +110,10 @@ public/
 ├─ data/                  # 빌드된 사전 검색 데이터
 └─ og.png                 # 1200×630 소셜 미리보기
 scripts/
-└─ build-dictionary.mjs   # 한국어기초사전 XML 변환
+├─ build-dictionary.mjs   # 한국어기초사전 XML 변환
+└─ serve-built.mjs        # 교차 플랫폼 프로덕션 서버
 tests/
+├─ e2e/                   # Chromium 기능·접근성 회귀 테스트
 └─ rendered-html.test.mjs # 렌더링·데이터·OG 회귀 테스트
 ```
 

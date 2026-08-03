@@ -53,8 +53,9 @@ test("removes starter-only assets and dependencies", async () => {
   ]);
 
   assert.match(page, /MiniSearch/);
-  assert.match(page, /malgyeol:favorites:v1/);
-  assert.match(page, /aria-modal="true"/);
+  assert.match(page, /malgyeol:favorites:v2/);
+  assert.match(page, /@radix-ui\/react-dialog/);
+  assert.match(page, /dictionary\.worker/);
   assert.match(layout, /lang="ko"/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
   assert.doesNotMatch(page, /_sites-preview|SkeletonPreview|codex-preview/);
@@ -62,15 +63,16 @@ test("removes starter-only assets and dependencies", async () => {
 });
 
 test("ships a compact dictionary without restricted example or media fields", async () => {
-  const [dictionaryText, metadataText] = await Promise.all([
-    readFile(new URL("../public/data/dictionary.json", import.meta.url), "utf8"),
+  const [manifestText, metadataText] = await Promise.all([
+    readFile(new URL("../public/data/dictionary-manifest.json", import.meta.url), "utf8"),
     readFile(new URL("../public/data/dictionary-meta.json", import.meta.url), "utf8"),
   ]);
-  const dictionary = JSON.parse(dictionaryText);
+  const manifest = JSON.parse(manifestText);
   const metadata = JSON.parse(metadataText);
 
-  assert.equal(dictionary.length, 51_555);
-  assert.equal(metadata.entryCount, dictionary.length);
+  assert.equal(manifest.entryCount, 51_555);
+  assert.equal(manifest.chunks.length, 8);
+  assert.equal(metadata.entryCount, manifest.entryCount);
   assert.match(metadata.sourceCommit, /^[\da-f]{40}$/);
   assert.deepEqual(metadata.excludedFields, [
     "SenseExample",
@@ -79,16 +81,21 @@ test("ships a compact dictionary without restricted example or media fields", as
     "video",
   ]);
 
-  for (const entry of dictionary) {
-    assert.deepEqual(
-      Object.keys(entry).filter((key) =>
-        ["example", "sound", "image", "video"].includes(key),
-      ),
-      [],
+  let entryCount = 0;
+  for (const chunk of manifest.chunks) {
+    const tuples = JSON.parse(
+      await readFile(new URL(`../public/data/${chunk.path}`, import.meta.url), "utf8"),
     );
-    assert.equal(entry.source, "krdict");
-    assert.equal(entry.curated, false);
+    assert.equal(tuples.length, chunk.count);
+    entryCount += tuples.length;
+    for (const tuple of tuples) {
+      assert.equal(tuple.length, 5);
+      assert.match(tuple[0], /^d-/);
+      assert.equal(typeof tuple[1], "string");
+      assert.equal(typeof tuple[4], "string");
+    }
   }
+  assert.equal(entryCount, manifest.entryCount);
 });
 
 test("ships a standard 1200 by 630 PNG social card", async () => {

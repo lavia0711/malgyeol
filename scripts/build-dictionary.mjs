@@ -1,6 +1,5 @@
-import { createReadStream, createWriteStream } from "node:fs";
+import { createReadStream } from "node:fs";
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
-import { once } from "node:events";
 import { basename, join, resolve } from "node:path";
 import { createInterface } from "node:readline";
 
@@ -8,8 +7,9 @@ const sourceDirectory = resolve(
   process.argv[2] ?? "work/korean-dict-nikl/krdict",
 );
 const outputDirectory = resolve(process.argv[3] ?? "public/data");
-const outputFile = join(outputDirectory, "dictionary.json");
+const manifestFile = join(outputDirectory, "dictionary-manifest.json");
 const metadataFile = join(outputDirectory, "dictionary-meta.json");
+const ENTRIES_PER_CHUNK = 6_500;
 
 const decodeXml = (value) =>
   value
@@ -28,10 +28,6 @@ const attribute = (line, name) => {
   return match ? decodeXml(match[1]) : "";
 };
 
-async function writeChunk(stream, chunk) {
-  if (!stream.write(chunk)) await once(stream, "drain");
-}
-
 await mkdir(outputDirectory, { recursive: true });
 const files = (await readdir(sourceDirectory))
   .filter((file) => /^\d{3}\.xml$/.test(file))
@@ -41,12 +37,23 @@ if (files.length === 0) {
   throw new Error(`No 한국어기초사전 XML files found in ${sourceDirectory}`);
 }
 
-const output = createWriteStream(outputFile, { encoding: "utf8" });
-await writeChunk(output, "[\n");
-
 let count = 0;
 let entry = null;
 let inFirstSense = false;
+let pendingEntries = [];
+const chunks = [];
+
+async function flushChunk() {
+  if (pendingEntries.length === 0) return;
+  const fileName = `dictionary-${String(chunks.length + 1).padStart(3, "0")}.json`;
+  await writeFile(
+    join(outputDirectory, fileName),
+    `${JSON.stringify(pendingEntries)}\n`,
+    "utf8",
+  );
+  chunks.push({ path: fileName, count: pendingEntries.length });
+  pendingEntries = [];
+}
 
 for (const file of files) {
   const lines = createInterface({
@@ -92,24 +99,15 @@ for (const file of files) {
         entry.word &&
         entry.definition
       ) {
-        const compactEntry = {
-          id: `d-${entry.sourceId}`,
-          word: entry.word,
-          ...(entry.pronunciation
-            ? { pronunciation: entry.pronunciation }
-            : {}),
-          partOfSpeech: entry.partOfSpeech || "품사 없음",
-          definition: entry.definition,
-          moods: [],
-          creativeUses: [],
-          curated: false,
-          source: "krdict",
-        };
-        await writeChunk(
-          output,
-          `${count === 0 ? "" : ",\n"}${JSON.stringify(compactEntry)}`,
-        );
+        pendingEntries.push([
+          `d-${entry.sourceId}`,
+          entry.word,
+          entry.pronunciation || null,
+          entry.partOfSpeech || "품사 없음",
+          entry.definition,
+        ]);
         count += 1;
+        if (pendingEntries.length >= ENTRIES_PER_CHUNK) await flushChunk();
       }
       entry = null;
       inFirstSense = false;
@@ -117,9 +115,13 @@ for (const file of files) {
   }
 }
 
-await writeChunk(output, "\n]\n");
-output.end();
-await once(output, "finish");
+await flushChunk();
+
+await writeFile(
+  manifestFile,
+  `${JSON.stringify({ version: 1, entryCount: count, chunks }, null, 2)}\n`,
+  "utf8",
+);
 
 let sourceCommit = "unknown";
 try {
@@ -159,4 +161,6 @@ const metadata = {
 };
 
 await writeFile(metadataFile, `${JSON.stringify(metadata, null, 2)}\n`, "utf8");
-console.log(`Wrote ${count.toLocaleString("ko-KR")} entries to ${outputFile}`);
+console.log(
+  `Wrote ${count.toLocaleString("ko-KR")} entries in ${chunks.length} chunks to ${outputDirectory}`,
+);

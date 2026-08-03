@@ -1,0 +1,38 @@
+{
+  "version": 1,
+  "entryCount": 51555,
+  "chunks": [
+    {
+      "path": "dictionary-001.json",
+      "count": 6500
+    },
+    {
+      "path": "dictionary-002.json",
+      "count": 6500
+    },
+    {
+      "path": "dictionary-003.json",
+      "count": 6500
+    },
+    {
+      "path": "dictionary-004.json",
+      "count": 6500
+    },
+    {
+      "path": "dictionary-005.json",
+      "count": 6500
+    },
+    {
+      "path": "dictionary-006.json",
+      "count": 6500
+    },
+    {
+      "path": "dictionary-007.json",
+      "count": 6500
+    },
+    {
+      "path": "dictionary-008.json",
+      "count": 6055
+    }
+  ]
+}

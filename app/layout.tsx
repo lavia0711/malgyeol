@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
+import "@fontsource/hahmlet/400.css";
+import "@fontsource/hahmlet/500.css";
 import "./globals.css";
 
 const title = "말결 — 아름다운 한국어 단어 찾기";
@@ -51,7 +53,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export const viewport: Viewport = {
-  themeColor: "#f3eee2",
+  themeColor: "#f2ead9",
   colorScheme: "light",
 };
 
