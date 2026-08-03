@@ -194,6 +194,15 @@ export const curatedWords: WordEntry[] = MOODS.flatMap((mood, moodIndex) =>
   })),
 );
 
+const curatedByMood = MOODS.map((_, moodIndex) =>
+  curatedWords.slice(moodIndex * seeds[MOODS[moodIndex]].length, (moodIndex + 1) * seeds[MOODS[moodIndex]].length),
+);
+
+export const balancedCuratedWords: WordEntry[] = Array.from(
+  { length: Math.max(...curatedByMood.map((entries) => entries.length)) },
+  (_, wordIndex) => curatedByMood.map((entries) => entries[wordIndex]).filter(Boolean),
+).flat() as WordEntry[];
+
 export const wordById = new Map(curatedWords.map((entry) => [entry.id, entry]));
 
 export function getTodayWord(date = new Date()): WordEntry {
